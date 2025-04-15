@@ -2,9 +2,14 @@ let waveColor = "#00FF00";   // Global variable for waveform color.
 let zoomFactor = 1;          // Default zoom factor.
 let analyzerGain = 1;        // Effective gain from logarithmic mapping.
 let lineThickness = 2;       // Default waveform line thickness.
+let smoothingLerpFactor = 1; // Default lerp factor for smoothing.
+                             // (1 means immediate update, 0 means fully smoothed)
 
 let mic, fft, gainNode;
 let logo, logoX, logoY, logoXSpeed, logoYSpeed;
+
+// Global array to store our smoothed waveform:
+let smoothedWaveform = [];
 
 function preload() {
   // Ensure you have a valid logo.png in your project folder.
@@ -27,10 +32,9 @@ function setup() {
     gainNode = new p5.Gain();
     gainNode.amp(analyzerGain);  // Set the initial gain.
     gainNode.setInput(mic);
-    // (Optional: connect gainNode to master output via gainNode.connect() if needed.)
     
-    // Initialize FFT using the output of the gain node.
-    fft = new p5.FFT();
+    // Initialize FFT with a high smoothing parameter.
+    fft = new p5.FFT(0.95, 1024);
     fft.setInput(gainNode);
     
     // Once permission is granted, update the default device display.
@@ -58,7 +62,6 @@ function setup() {
   const gainSlider = document.getElementById("gainSlider");
   if (gainSlider) {
     gainSlider.addEventListener("input", function() {
-      // Read raw slider value (between 0 and 1) and map logarithmically.
       let sliderValue = parseFloat(this.value);
       // effectiveGain = 10^((sliderValue - 0.25) / 0.75)
       analyzerGain = Math.pow(10, (sliderValue - 0.25) / 0.75);
@@ -70,11 +73,23 @@ function setup() {
   }
   
   // Attach event listener for the line thickness slider.
-  const lineThicknessSlider = document.getElementById("lineThicknessSlider");
-  if (lineThicknessSlider) {
-    lineThicknessSlider.addEventListener("input", function() {
+  const thicknessSlider = document.getElementById("lineThicknessSlider");
+  if (thicknessSlider) {
+    thicknessSlider.addEventListener("input", function() {
       lineThickness = parseFloat(this.value);
       document.getElementById("currentLineThickness").innerText = "Current Line Thickness: " + lineThickness.toFixed(2);
+    });
+  }
+  
+  // Attach event listener for the smoothing slider.
+  const smoothingSlider = document.getElementById("smoothingSlider");
+  if (smoothingSlider) {
+    smoothingSlider.addEventListener("input", function() {
+      let sliderVal = parseFloat(this.value);
+      // Map slider such that 0 => no smoothing (fast update, effective factor = 1)
+      // and 1 => maximum smoothing (effective factor = 0).
+      smoothingLerpFactor = 1 - sliderVal;
+      document.getElementById("currentSmoothing").innerText = "Current Smoothing: " + sliderVal.toFixed(2);
     });
   }
 }
@@ -93,21 +108,31 @@ function draw() {
   }
   image(logo, logoX, logoY);
 
-  // --- Draw the Waveform ---
+  // --- Draw the Smoothed Waveform ---
   if (fft) {
-    let waveform = fft.waveform();
-    // Calculate the number of samples to display based on zoomFactor.
-    let nSamples = waveform.length / zoomFactor;
-    nSamples = constrain(nSamples, 1, waveform.length);
+    let rawWaveform = fft.waveform(); // Get current waveform (raw data)
+    
+    // Initialize smoothedWaveform if needed.
+    if (smoothedWaveform.length !== rawWaveform.length) {
+      smoothedWaveform = rawWaveform.slice();
+    } else {
+      // Interpolate each sample.
+      for (let i = 0; i < rawWaveform.length; i++) {
+        smoothedWaveform[i] = lerp(smoothedWaveform[i], rawWaveform[i], smoothingLerpFactor);
+      }
+    }
+    
+    // Determine how many samples to draw based on zoomFactor.
+    let nSamples = smoothedWaveform.length / zoomFactor;
+    nSamples = constrain(nSamples, 1, smoothedWaveform.length);
 
     noFill();
     stroke(waveColor);
-    strokeWeight(lineThickness);  // Use our adjusted line thickness.
+    strokeWeight(lineThickness);
     beginShape();
     for (let i = 0; i < nSamples; i++) {
-      // Map the current sample index to the full canvas width.
       let x = map(i, 0, nSamples, 0, width);
-      let y = map(waveform[i], -1, 1, 0, height);
+      let y = map(smoothedWaveform[i], -1, 1, 0, height);
       vertex(x, y);
     }
     endShape();
@@ -136,8 +161,7 @@ function updateCurrentDeviceDisplay() {
     const tracks = mic.stream.getAudioTracks();
     if (tracks.length > 0) {
       const settings = tracks[0].getSettings();
-      const deviceId = settings.deviceId; // Device ID from the stream.
-      // Look up the device label using enumerateDevices.
+      const deviceId = settings.deviceId;
       navigator.mediaDevices.enumerateDevices().then(function(devices) {
         let deviceLabel = "Unknown";
         devices.forEach(function(device) {
