@@ -34,21 +34,26 @@
       display: block;
       margin-top: 10px;
     }
+    /* Additional styling for note */
+    .note {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <!-- Hidden settings panel -->
+  <!-- Settings panel -->
   <div id="settingsPanel">
     <h3>Settings</h3>
-    
     <label for="colorPicker">Waveform Color:</label>
     <input type="color" id="colorPicker" value="#00FF00">
     
-    <label for="audioInputSelect">Audio Input:</label>
-    <select id="audioInputSelect"></select>
+    <p id="currentDevice">Default Microphone Device: Not determined</p>
     
-    <!-- Display the currently used input -->
-    <p id="currentDevice">Current Device: Not Selected</p>
+    <p class="note">
+      Note: This visualizer only listens to the default microphone device on your system.
+    </p>
     
     <button onclick="toggleSettings()">Close</button>
   </div>
