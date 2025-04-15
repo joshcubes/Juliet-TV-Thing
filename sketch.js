@@ -1,131 +1,197 @@
-let waveColor = "#00FF00";   // Global variable for waveform color.
-let zoomFactor = 1;          // Default zoom factor.
-let analyzerGain = 1;        // Effective gain from logarithmic mapping.
-let lineThickness = 2;       // Default waveform line thickness.
-let smoothingLerpFactor = 1; // Default lerp factor for smoothing.
-                             // (1 means immediate update, 0 means fully smoothed)
+// Visualizer Settings Variables
+let waveColor = "#00FF00";         // Waveform color.
+let zoomFactor = 1;                // Zoom factor for waveform.
+let analyzerGain = 1;              // Effective gain (logarithmically mapped).
+let lineThickness = 2;             // Waveform line thickness.
+let smoothingLerpFactor = 1;       // For waveform smoothing (1 = no smoothing, 0 = maximum smoothing).
 
+// Logo Settings Variables
+let logoSpeedFactor = 1;           // Multiplier for logo bouncing speed.
+// Instead of a direct pixel-valued scale, we use a percentage of the window height.
+let logoPercent = 20;              // Logo height as a percentage of window height (default 20%).
+
+// Reference dimensions for the logo (set from default image in preload—and updated on logo upload)
+let refLogoWidth, refLogoHeight;
+
+// Audio and Visualizer Objects
 let mic, fft, gainNode;
-let logo, logoX, logoY, logoXSpeed, logoYSpeed;
-
-// Global array to store our smoothed waveform:
-let smoothedWaveform = [];
+let logo, logoX, logoY;
+let baseLogoXSpeed = 3;            // Base horizontal speed.
+let baseLogoYSpeed = 3;            // Base vertical speed.
+let smoothedWaveform = [];         // Array for storing smoothed FFT data.
 
 function preload() {
-  // Ensure you have a valid logo.png in your project folder.
-  logo = loadImage("logo.png");
+  // Load the default logo image.
+  // When loaded, store its intrinsic dimensions as reference.
+  logo = loadImage("logo.png", function(img) {
+    refLogoWidth = img.width;
+    refLogoHeight = img.height;
+  });
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-
-  // Initialize bouncing logo parameters.
-  logoX = random(width - logo.width);
-  logoY = random(height - logo.height);
-  logoXSpeed = 3;
-  logoYSpeed = 3;
-
+  
+  // Compute the desired output height (as a percentage of the window height).
+  let desiredHeight = (logoPercent / 100) * height;
+  let logoScale = desiredHeight / refLogoHeight;
+  let outputLogoWidth = refLogoWidth * logoScale;
+  let outputLogoHeight = refLogoHeight * logoScale;
+  
+  // Initially center the logo.
+  logoX = (width - outputLogoWidth) / 2;
+  logoY = (height - outputLogoHeight) / 2;
+  
+  // Set base speeds.
+  baseLogoXSpeed = 3;
+  baseLogoYSpeed = 3;
+  
   // Start the default microphone.
   mic = new p5.AudioIn();
   mic.start(() => {
-    // Create a gain node and route the mic through it.
+    // Set up a gain node for the mic.
     gainNode = new p5.Gain();
-    gainNode.amp(analyzerGain);  // Set the initial gain.
+    gainNode.amp(analyzerGain);
     gainNode.setInput(mic);
     
-    // Initialize FFT with a high smoothing parameter.
+    // Initialize the FFT analyzer with a smoothing parameter.
     fft = new p5.FFT(0.95, 1024);
     fft.setInput(gainNode);
     
-    // Once permission is granted, update the default device display.
     updateCurrentDeviceDisplay();
   });
-
-  // Attach event listener for the color picker.
-  const colorPicker = document.getElementById("colorPicker");
-  if (colorPicker) {
-    colorPicker.addEventListener("input", function() {
-      waveColor = this.value;
-    });
-  }
-
-  // Attach event listener for the zoom slider.
-  const zoomSlider = document.getElementById("zoomSlider");
-  if (zoomSlider) {
-    zoomSlider.addEventListener("input", function() {
-      zoomFactor = parseFloat(this.value);
-      document.getElementById("currentZoom").innerText = "Current Zoom: " + zoomFactor.toFixed(1);
-    });
-  }
   
-  // Attach event listener for the gain slider.
-  const gainSlider = document.getElementById("gainSlider");
-  if (gainSlider) {
-    gainSlider.addEventListener("input", function() {
-      let sliderValue = parseFloat(this.value);
-      // effectiveGain = 10^((sliderValue - 0.25) / 0.75)
-      analyzerGain = Math.pow(10, (sliderValue - 0.25) / 0.75);
-      if (gainNode) {
-        gainNode.amp(analyzerGain);
-      }
-      document.getElementById("currentGain").innerText = "Current Gain: " + analyzerGain.toFixed(2);
-    });
-  }
+  // --- Attach Event Listeners ---
   
-  // Attach event listener for the line thickness slider.
-  const thicknessSlider = document.getElementById("lineThicknessSlider");
-  if (thicknessSlider) {
-    thicknessSlider.addEventListener("input", function() {
-      lineThickness = parseFloat(this.value);
-      document.getElementById("currentLineThickness").innerText = "Current Line Thickness: " + lineThickness.toFixed(2);
-    });
-  }
+  // Waveform Color
+  document.getElementById("colorPicker").addEventListener("input", function() {
+    waveColor = this.value;
+  });
   
-  // Attach event listener for the smoothing slider.
-  const smoothingSlider = document.getElementById("smoothingSlider");
-  if (smoothingSlider) {
-    smoothingSlider.addEventListener("input", function() {
-      let sliderVal = parseFloat(this.value);
-      // Map slider such that 0 => no smoothing (fast update, effective factor = 1)
-      // and 1 => maximum smoothing (effective factor = 0).
-      smoothingLerpFactor = 1 - sliderVal;
-      document.getElementById("currentSmoothing").innerText = "Current Smoothing: " + sliderVal.toFixed(2);
-    });
-  }
+  // Zoom Slider
+  document.getElementById("zoomSlider").addEventListener("input", function() {
+    zoomFactor = parseFloat(this.value);
+    document.getElementById("currentZoom").innerText = "Current Zoom: " + zoomFactor.toFixed(1);
+  });
+  
+  // Gain Slider (logarithmic mapping)
+  document.getElementById("gainSlider").addEventListener("input", function() {
+    let sliderValue = parseFloat(this.value);
+    analyzerGain = Math.pow(10, (sliderValue - 0.25) / 0.75);
+    if (gainNode) {
+      gainNode.amp(analyzerGain);
+    }
+    document.getElementById("currentGain").innerText = "Current Gain: " + analyzerGain.toFixed(2);
+  });
+  
+  // Line Thickness Slider
+  document.getElementById("lineThicknessSlider").addEventListener("input", function() {
+    lineThickness = parseFloat(this.value);
+    document.getElementById("currentLineThickness").innerText = "Current Line Thickness: " + lineThickness.toFixed(2);
+  });
+  
+  // Smoothing Slider
+  document.getElementById("smoothingSlider").addEventListener("input", function() {
+    let sliderVal = parseFloat(this.value);
+    // 0 => no smoothing (lerp factor = 1), 1 => maximum smoothing (lerp factor = 0)
+    smoothingLerpFactor = 1 - sliderVal;
+    document.getElementById("currentSmoothing").innerText = "Current Smoothing: " + sliderVal.toFixed(2);
+  });
+  
+  // Logo Height Slider – now represents a percentage of the window height.
+  document.getElementById("logoSizeSlider").addEventListener("input", function() {
+    logoPercent = parseFloat(this.value);
+    document.getElementById("currentLogoSize").innerText = "Current Logo Height: " + logoPercent.toFixed(0) + "%";
+    
+    // Recalculate desired height from the current window height.
+    let desiredHeight = (logoPercent / 100) * height;
+    let logoScale = desiredHeight / refLogoHeight;
+    let currentLogoWidth = refLogoWidth * logoScale;
+    let currentLogoHeight = refLogoHeight * logoScale;
+    
+    // Recenter the logo.
+    logoX = (width - currentLogoWidth) / 2;
+    logoY = (height - currentLogoHeight) / 2;
+  });
+  
+  // Logo Speed Slider – adjust the logoSpeedFactor.
+  document.getElementById("logoSpeedSlider").addEventListener("input", function() {
+    logoSpeedFactor = parseFloat(this.value);
+    document.getElementById("currentLogoSpeed").innerText = "Current Logo Speed: " + logoSpeedFactor.toFixed(1);
+  });
+  
+  // Logo Upload – allow a local upload; update reference dimensions so aspect ratio is preserved.
+  document.getElementById("logoUpload").addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        loadImage(e.target.result, function(loadedImage) {
+          // Update the global logo image.
+          logo = loadedImage;
+          // Update reference dimensions based on the new image.
+          refLogoWidth = loadedImage.width;
+          refLogoHeight = loadedImage.height;
+          // Recenter the logo using the current slider value.
+          let desiredHeight = (logoPercent / 100) * height;
+          let logoScale = desiredHeight / refLogoHeight;
+          let currentLogoWidth = refLogoWidth * logoScale;
+          let currentLogoHeight = refLogoHeight * logoScale;
+          logoX = (width - currentLogoWidth) / 2;
+          logoY = (height - currentLogoHeight) / 2;
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 }
 
 function draw() {
   background(30);
-
-  // --- Bouncing DVD-style Logo ---
-  logoX += logoXSpeed;
-  logoY += logoYSpeed;
-  if (logoX < 0 || logoX + logo.width > width) {
-    logoXSpeed *= -1;
+  
+  // --- Update and Draw the Bouncing Logo ---
+  // Retrieve the latest desired height from the current window size and slider value.
+  let desiredHeight = (logoPercent / 100) * height;
+  // Compute the scale factor based on the reference height.
+  let currentLogoScale = desiredHeight / refLogoHeight;
+  // Compute output dimensions while preserving the aspect ratio.
+  let currentLogoWidth = refLogoWidth * currentLogoScale;
+  let currentLogoHeight = refLogoHeight * currentLogoScale;
+  
+  // Update the logo's position using the bounce simulation.
+  let effectiveXSpeed = baseLogoXSpeed * logoSpeedFactor;
+  let effectiveYSpeed = baseLogoYSpeed * logoSpeedFactor;
+  logoX += effectiveXSpeed;
+  logoY += effectiveYSpeed;
+  
+  // Bounce against the current canvas boundaries.
+  if (logoX < 0 || logoX + currentLogoWidth > width) {
+    baseLogoXSpeed *= -1;
+    logoX += baseLogoXSpeed * logoSpeedFactor;
   }
-  if (logoY < 0 || logoY + logo.height > height) {
-    logoYSpeed *= -1;
+  if (logoY < 0 || logoY + currentLogoHeight > height) {
+    baseLogoYSpeed *= -1;
+    logoY += baseLogoYSpeed * logoSpeedFactor;
   }
-  image(logo, logoX, logoY);
-
-  // --- Draw the Smoothed Waveform ---
+  
+  // Draw the logo.
+  image(logo, logoX, logoY, currentLogoWidth, currentLogoHeight);
+  
+  // --- Get and Smooth the Waveform Data ---
   if (fft) {
-    let rawWaveform = fft.waveform(); // Get current waveform (raw data)
+    let rawWaveform = fft.waveform(); // Array of values in [-1, 1]
     
-    // Initialize smoothedWaveform if needed.
     if (smoothedWaveform.length !== rawWaveform.length) {
       smoothedWaveform = rawWaveform.slice();
     } else {
-      // Interpolate each sample.
       for (let i = 0; i < rawWaveform.length; i++) {
         smoothedWaveform[i] = lerp(smoothedWaveform[i], rawWaveform[i], smoothingLerpFactor);
       }
     }
     
-    // Determine how many samples to draw based on zoomFactor.
     let nSamples = smoothedWaveform.length / zoomFactor;
     nSamples = constrain(nSamples, 1, smoothedWaveform.length);
-
+    
     noFill();
     stroke(waveColor);
     strokeWeight(lineThickness);
@@ -143,8 +209,8 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
-// Toggle the settings panel when S is pressed.
 function keyPressed() {
+  // Toggle settings panel when 'S' is pressed.
   if (key === 's' || key === 'S') {
     toggleSettings();
   }
@@ -155,7 +221,6 @@ function toggleSettings() {
   panel.style.display = (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
 }
 
-// Update and display the default microphone device label.
 function updateCurrentDeviceDisplay() {
   if (mic && mic.stream) {
     const tracks = mic.stream.getAudioTracks();
@@ -169,12 +234,10 @@ function updateCurrentDeviceDisplay() {
             deviceLabel = device.label;
           }
         });
-        document.getElementById("currentDevice").innerText =
-          "Default Microphone Device: " + deviceLabel;
+        document.getElementById("currentDevice").innerText = "Default Microphone Device: " + deviceLabel;
       });
     } else {
-      document.getElementById("currentDevice").innerText =
-          "Default Microphone Device: Not Available";
+      document.getElementById("currentDevice").innerText = "Default Microphone Device: Not Available";
     }
   }
 }
