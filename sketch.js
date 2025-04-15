@@ -1,16 +1,15 @@
 // Visualizer Settings Variables
 let waveColor = "#00FF00";         // Waveform color.
-let zoomFactor = 1;                // Zoom factor for waveform.
-let analyzerGain = 1;              // Effective gain (logarithmically mapped).
-let lineThickness = 2;             // Waveform line thickness.
-let smoothingLerpFactor = 1;       // For waveform smoothing (1 = no smoothing, 0 = maximum smoothing).
+let zoomFactor = 2.4;              // Zoom factor for waveform.
+let analyzerGain = 5.75;           // Effective gain (logarithmically mapped).
+let lineThickness = 4;             // Waveform line thickness.
+let smoothingLerpFactor = 1 - 0.55;  // For waveform smoothing (0.55 smoothing slider yields lerp factor 0.45).
 
 // Logo Settings Variables
-let logoSpeedFactor = 1;           // Multiplier for logo bouncing speed.
-// Instead of a direct pixel-valued scale, we use a percentage of the window height.
-let logoPercent = 20;              // Logo height as a percentage of window height (default 20%).
+let logoSpeedFactor = 1.4;         // Multiplier for logo bouncing speed.
+let logoPercent = 23;              // Logo height as percentage of window height (default 23%)
 
-// Reference dimensions for the logo (set from default image in preload—and updated on logo upload)
+// Reference dimensions for the logo (set from the default logo in preload—and updated on upload)
 let refLogoWidth, refLogoHeight;
 
 // Audio and Visualizer Objects
@@ -32,7 +31,7 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   
-  // Compute the desired output height (as a percentage of the window height).
+  // Compute the desired output height from logoPercent.
   let desiredHeight = (logoPercent / 100) * height;
   let logoScale = desiredHeight / refLogoHeight;
   let outputLogoWidth = refLogoWidth * logoScale;
@@ -49,7 +48,7 @@ function setup() {
   // Start the default microphone.
   mic = new p5.AudioIn();
   mic.start(() => {
-    // Set up a gain node for the mic.
+    // Set up a gain node for the microphone.
     gainNode = new p5.Gain();
     gainNode.amp(analyzerGain);
     gainNode.setInput(mic);
@@ -93,7 +92,7 @@ function setup() {
   // Smoothing Slider
   document.getElementById("smoothingSlider").addEventListener("input", function() {
     let sliderVal = parseFloat(this.value);
-    // 0 => no smoothing (lerp factor = 1), 1 => maximum smoothing (lerp factor = 0)
+    // 0 => no smoothing (lerp factor = 1); 1 => maximum smoothing (lerp factor = 0)
     smoothingLerpFactor = 1 - sliderVal;
     document.getElementById("currentSmoothing").innerText = "Current Smoothing: " + sliderVal.toFixed(2);
   });
@@ -150,21 +149,21 @@ function draw() {
   background(30);
   
   // --- Update and Draw the Bouncing Logo ---
-  // Retrieve the latest desired height from the current window size and slider value.
+  // Compute the desired output height based on current windowHeight and logoPercent.
   let desiredHeight = (logoPercent / 100) * height;
-  // Compute the scale factor based on the reference height.
+  // Compute the current scaling factor.
   let currentLogoScale = desiredHeight / refLogoHeight;
-  // Compute output dimensions while preserving the aspect ratio.
+  // Calculate output dimensions while preserving the original aspect ratio.
   let currentLogoWidth = refLogoWidth * currentLogoScale;
   let currentLogoHeight = refLogoHeight * currentLogoScale;
   
-  // Update the logo's position using the bounce simulation.
+  // Update logo position using bounce simulation.
   let effectiveXSpeed = baseLogoXSpeed * logoSpeedFactor;
   let effectiveYSpeed = baseLogoYSpeed * logoSpeedFactor;
   logoX += effectiveXSpeed;
   logoY += effectiveYSpeed;
   
-  // Bounce against the current canvas boundaries.
+  // Bounce against the canvas boundaries.
   if (logoX < 0 || logoX + currentLogoWidth > width) {
     baseLogoXSpeed *= -1;
     logoX += baseLogoXSpeed * logoSpeedFactor;
