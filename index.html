@@ -21,9 +21,9 @@
       position: absolute;
       top: 20px;
       left: 20px;
-      width: 320px;               /* Fixed width */
-      max-height: 90vh;           /* Maximum height relative to viewport */
-      background: rgba(238, 238, 238, 0.75); /* 75% opaque */
+      width: 320px;               
+      max-height: 90vh;           
+      background: rgba(238, 238, 238, 0.75);
       padding: 15px;
       border: 1px solid #ccc;
       border-radius: 6px;
@@ -89,7 +89,6 @@
     <p id="currentZoom">Current Zoom: 2.4</p>
     
     <label for="gainSlider">Analyser Gain (slider range 0–1, mapped logarithmically):</label>
-    <!-- Default slider value 0.82 gives gain=10^((0.82-0.25)/0.75) ~ 5.75 -->
     <input type="range" id="gainSlider" min="0" max="1" value="0.82" step="0.01">
     <p id="currentGain">Current Gain: 5.75</p>
     
@@ -121,6 +120,13 @@
       <label for="logoUpload">Upload Logo (local only):</label>
       <input type="file" id="logoUpload" accept="image/*">
     </div>
+    
+    <!-- Config Save/Load Tools -->
+    <button id="saveConfigButton">Save Config</button>
+    <button id="loadConfigButton">Load Config</button>
+    <button id="loadDefaultsButton">Load Defaults</button>
+    <!-- Hidden file input for loading config -->
+    <input type="file" id="configUpload" accept=".json" style="display:none">
     
     <button onclick="toggleSettings()">Close</button>
   </div>
