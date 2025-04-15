@@ -3,13 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <title>Juliet Visualizer</title>
+  <!-- Load p5.js and p5.sound -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+  <!-- Link to our custom sketch -->
   <script src="sketch.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; background: #000; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    /* Settings panel style */
+    #settingsPanel {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: #eee;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-family: sans-serif;
+      z-index: 1000;
+    }
+    #settingsPanel h3 {
+      margin-top: 0;
+    }
+    #settingsPanel label {
+      display: block;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
+  <!-- Hidden settings panel -->
+  <div id="settingsPanel">
+    <h3>Settings</h3>
+    
+    <label for="colorPicker">Waveform Color:</label>
+    <input type="color" id="colorPicker" value="#00FF00">
+    
+    <label for="audioInputSelect">Audio Input:</label>
+    <select id="audioInputSelect"></select>
+    
+    <!-- Display the currently used input -->
+    <p id="currentDevice">Current Device: Not Selected</p>
+    
+    <button onclick="toggleSettings()">Close</button>
+  </div>
 </body>
 </html>
