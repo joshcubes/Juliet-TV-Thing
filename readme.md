@@ -32,6 +32,8 @@ The Juliet Visualizer is hosted on GitHub Pages and is available [here](https://
 
 Simply visit the link in your browser to use the visualizer. Adjust the settings using the settings menu ('S' or click in the top left corner) and enjoy.
 
+You can also download the project and host it locally, it's just a simple webpage, nowt special at all. 
+
 
 ## License
 
