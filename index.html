@@ -41,7 +41,8 @@
     }
     #settingsPanel input[type="color"],
     #settingsPanel input[type="range"],
-    #settingsPanel input[type="file"] {
+    #settingsPanel input[type="file"],
+    #settingsPanel input[type="checkbox"] {
       width: 100%;
       margin-top: 5px;
     }
@@ -80,6 +81,14 @@
   <!-- Settings Panel -->
   <div id="settingsPanel">
     <h3>Settings</h3>
+    
+    <!-- Feature Toggles -->
+    <label>
+      <input type="checkbox" id="toggleLogo" checked> Show Bouncing Logo
+    </label>
+    <label>
+      <input type="checkbox" id="toggleWaveform" checked> Show Waveform
+    </label>
     
     <label for="colorPicker">Waveform Color:</label>
     <input type="color" id="colorPicker" value="#00FF00">

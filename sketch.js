@@ -9,6 +9,10 @@ let smoothingLerpFactor = 1 - 0.55;  // For waveform smoothing (0.55 slider yiel
 let logoSpeedFactor = 1.4;         // Multiplier for logo bouncing speed.
 let logoPercent = 23;              // Logo height as percentage of window height.
 
+// New Feature Toggles
+let showLogo = true;               // Toggle for bouncing logo.
+let showWaveform = true;           // Toggle for waveform display.
+
 // Reference dimensions for the logo (set from the default logo in preload—and updated on upload)
 let refLogoWidth, refLogoHeight;
 
@@ -31,13 +35,11 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   
-  // Compute the desired output height from logoPercent.
+  // Initialize logo position (centered).
   let desiredHeight = (logoPercent / 100) * height;
   let logoScale = desiredHeight / refLogoHeight;
   let outputLogoWidth = refLogoWidth * logoScale;
   let outputLogoHeight = refLogoHeight * logoScale;
-  
-  // Initially center the logo.
   logoX = (width - outputLogoWidth) / 2;
   logoY = (height - outputLogoHeight) / 2;
   
@@ -61,6 +63,14 @@ function setup() {
   });
   
   // --- Attach Event Listeners ---
+  
+  // Feature toggles
+  document.getElementById("toggleLogo").addEventListener("change", function() {
+    showLogo = this.checked;
+  });
+  document.getElementById("toggleWaveform").addEventListener("change", function() {
+    showWaveform = this.checked;
+  });
   
   // Waveform Color
   document.getElementById("colorPicker").addEventListener("input", function() {
@@ -97,7 +107,7 @@ function setup() {
     document.getElementById("currentSmoothing").innerText = "Current Smoothing: " + sliderVal.toFixed(2);
   });
   
-  // Logo Height Slider – adjust logo size and center.
+  // Logo Height Slider – adjust logo size and recenter.
   document.getElementById("logoSizeSlider").addEventListener("input", function() {
     logoPercent = parseFloat(this.value);
     document.getElementById("currentLogoSize").innerText = "Current Logo Height: " + logoPercent.toFixed(0) + "%";
@@ -109,7 +119,7 @@ function setup() {
     logoY = (height - currentLogoHeight) / 2;
   });
   
-  // Logo Speed Slider
+  // Logo Speed Slider – adjust logoSpeedFactor.
   document.getElementById("logoSpeedSlider").addEventListener("input", function() {
     logoSpeedFactor = parseFloat(this.value);
     document.getElementById("currentLogoSpeed").innerText = "Current Logo Speed: " + logoSpeedFactor.toFixed(1);
@@ -143,48 +153,49 @@ function setup() {
     // Trigger the hidden file input for config upload.
     document.getElementById("configUpload").click();
   });
-  document.getElementById("loadDefaultsButton").addEventListener("click", loadDefaults);
-  // Load default settings on startup.
-
-  // Config file upload event listener.
   document.getElementById("configUpload").addEventListener("change", function(event) {
     const file = event.target.files[0];
     if (file) {
       loadConfigFromFile(file);
     }
-    // Reset the input value so the same file can be re-uploaded if needed.
     this.value = null;
   });
+  
+  // Load Defaults Button
+  document.getElementById("loadDefaultsButton").addEventListener("click", loadDefaults);
 }
 
 function draw() {
   background(30);
   
   // --- Update and Draw the Bouncing Logo ---
-  let desiredHeight = (logoPercent / 100) * height;
-  let currentLogoScale = desiredHeight / refLogoHeight;
-  let currentLogoWidth = refLogoWidth * currentLogoScale;
-  let currentLogoHeight = refLogoHeight * currentLogoScale;
-  
-  let effectiveXSpeed = baseLogoXSpeed * logoSpeedFactor;
-  let effectiveYSpeed = baseLogoYSpeed * logoSpeedFactor;
-  logoX += effectiveXSpeed;
-  logoY += effectiveYSpeed;
-  
-  if (logoX < 0 || logoX + currentLogoWidth > width) {
-    baseLogoXSpeed *= -1;
-    logoX += baseLogoXSpeed * logoSpeedFactor;
+  if (showLogo) {
+    let desiredHeight = (logoPercent / 100) * height;
+    let currentLogoScale = desiredHeight / refLogoHeight;
+    let currentLogoWidth = refLogoWidth * currentLogoScale;
+    let currentLogoHeight = refLogoHeight * currentLogoScale;
+    
+    let effectiveXSpeed = baseLogoXSpeed * logoSpeedFactor;
+    let effectiveYSpeed = baseLogoYSpeed * logoSpeedFactor;
+    logoX += effectiveXSpeed;
+    logoY += effectiveYSpeed;
+    
+    // Bounce against canvas boundaries.
+    if (logoX < 0 || logoX + currentLogoWidth > width) {
+      baseLogoXSpeed *= -1;
+      logoX += baseLogoXSpeed * logoSpeedFactor;
+    }
+    if (logoY < 0 || logoY + currentLogoHeight > height) {
+      baseLogoYSpeed *= -1;
+      logoY += baseLogoYSpeed * logoSpeedFactor;
+    }
+    
+    image(logo, logoX, logoY, currentLogoWidth, currentLogoHeight);
   }
-  if (logoY < 0 || logoY + currentLogoHeight > height) {
-    baseLogoYSpeed *= -1;
-    logoY += baseLogoYSpeed * logoSpeedFactor;
-  }
   
-  image(logo, logoX, logoY, currentLogoWidth, currentLogoHeight);
-  
-  // --- Get and Smooth the Waveform Data ---
-  if (fft) {
-    let rawWaveform = fft.waveform(); // Array of values in [-1, 1]
+  // --- Get and Draw the Waveform ---
+  if (showWaveform && fft) {
+    let rawWaveform = fft.waveform();
     
     if (smoothedWaveform.length !== rawWaveform.length) {
       smoothedWaveform = rawWaveform.slice();
@@ -249,7 +260,6 @@ function updateCurrentDeviceDisplay() {
 
 // --- Save/Load Config Functions ---
 
-// Save the current configuration as a JSON file.
 function saveConfig() {
   const config = {
     waveColor: waveColor,
@@ -258,7 +268,9 @@ function saveConfig() {
     lineThickness: lineThickness,
     smoothingValue: parseFloat(document.getElementById("smoothingSlider").value),
     logoPercent: logoPercent,
-    logoSpeedFactor: logoSpeedFactor
+    logoSpeedFactor: logoSpeedFactor,
+    showLogo: showLogo,
+    showWaveform: showWaveform
   };
   const configStr = JSON.stringify(config, null, 2);
   const blob = new Blob([configStr], { type: "application/json" });
@@ -267,10 +279,8 @@ function saveConfig() {
   a.download = "julietVisualizerConfig.json";
   a.click();
   URL.revokeObjectURL(a.href);
-  console.log("Configuration saved as file.");
 }
 
-// Load configuration from a JSON file.
 function loadConfigFromFile(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -283,7 +293,6 @@ function loadConfigFromFile(file) {
       
       zoomFactor = config.zoomFactor;
       document.getElementById("zoomSlider").value = config.zoomFactor;
-      document.getElementById("currentZoom").innerText = "Current Zoom: " + zoomFactor.toFixed(1);
       
       // Update gain.
       document.getElementById("gainSlider").value = config.gainSliderValue;
@@ -292,22 +301,18 @@ function loadConfigFromFile(file) {
       if (gainNode) { 
         gainNode.amp(analyzerGain); 
       }
-      document.getElementById("currentGain").innerText = "Current Gain: " + analyzerGain.toFixed(2);
       
       // Update line thickness.
       lineThickness = config.lineThickness;
       document.getElementById("lineThicknessSlider").value = config.lineThickness;
-      document.getElementById("currentLineThickness").innerText = "Current Line Thickness: " + lineThickness.toFixed(2);
       
-      // Update smoothing settings.
+      // Update smoothing.
       document.getElementById("smoothingSlider").value = config.smoothingValue;
-      document.getElementById("currentSmoothing").innerText = "Current Smoothing: " + config.smoothingValue.toFixed(2);
       smoothingLerpFactor = 1 - config.smoothingValue;
       
-      // Update logo size and center the logo.
+      // Update logo settings.
       logoPercent = config.logoPercent;
       document.getElementById("logoSizeSlider").value = config.logoPercent;
-      document.getElementById("currentLogoSize").innerText = "Current Logo Height: " + logoPercent.toFixed(0) + "%";
       let desiredHeight = (logoPercent / 100) * height;
       let logoScale = desiredHeight / refLogoHeight;
       let currentLogoWidth = refLogoWidth * logoScale;
@@ -315,12 +320,16 @@ function loadConfigFromFile(file) {
       logoX = (width - currentLogoWidth) / 2;
       logoY = (height - currentLogoHeight) / 2;
       
-      // Update logo speed.
       logoSpeedFactor = config.logoSpeedFactor;
       document.getElementById("logoSpeedSlider").value = config.logoSpeedFactor;
-      document.getElementById("currentLogoSpeed").innerText = "Current Logo Speed: " + logoSpeedFactor.toFixed(1);
       
-      console.log("Configuration loaded from file.");
+      // Update feature toggles.
+      showLogo = config.showLogo;
+      document.getElementById("toggleLogo").checked = config.showLogo;
+      
+      showWaveform = config.showWaveform;
+      document.getElementById("toggleWaveform").checked = config.showWaveform;
+      
     } catch (error) {
       console.error("Error parsing configuration file:", error);
     }
@@ -328,65 +337,39 @@ function loadConfigFromFile(file) {
   reader.readAsText(file);
 }
 
-// --- Open Settings on Top Left Click ---
-function mousePressed() {
-  // Check if the settings panel is currently open.
-  const panel = document.getElementById("settingsPanel");
+function loadDefaults() {
+  // Reset settings to original default values.
+  waveColor = "#00FF00";
+  zoomFactor = 2.4;
+  analyzerGain = 5.75;
+  lineThickness = 4;
+  smoothingLerpFactor = 1 - 0.55;
+  logoSpeedFactor = 1.4;
+  logoPercent = 23;
+  showLogo = true;
+  showWaveform = true;
   
-  // Only toggle settings if the panel is currently hidden.
+  document.getElementById("colorPicker").value = waveColor;
+  document.getElementById("zoomSlider").value = zoomFactor;
+  document.getElementById("gainSlider").value = 0.82;
+  document.getElementById("lineThicknessSlider").value = lineThickness;
+  document.getElementById("smoothingSlider").value = 0.55;
+  document.getElementById("logoSpeedSlider").value = logoSpeedFactor;
+  document.getElementById("logoSizeSlider").value = logoPercent;
+  
+  document.getElementById("toggleLogo").checked = true;
+  document.getElementById("toggleWaveform").checked = true;
+  
+  console.log("Defaults loaded.");
+}
+
+// --- Open Settings on Top Left Click (if panel is closed) ---
+function mousePressed() {
+  const panel = document.getElementById("settingsPanel");
   if (panel.style.display === "none" || panel.style.display === "") {
-    // If the click/tap is in the upper-left quadrant, open the settings panel.
+    // If not open, a click in the upper-left quadrant toggles it.
     if (mouseX < width / 2 && mouseY < height / 2) {
       toggleSettings();
     }
   }
-}
-
-
-function loadDefaults() {
-  // Reset waveform settings.
-  waveColor = "#00FF00";
-  document.getElementById("colorPicker").value = waveColor;
-  
-  zoomFactor = 2.4;
-  document.getElementById("zoomSlider").value = zoomFactor;
-  document.getElementById("currentZoom").innerText = "Current Zoom: " + zoomFactor.toFixed(1);
-  
-  // Reset gain; recompute analyzerGain from default slider value.
-  document.getElementById("gainSlider").value = 0.82;
-  let sliderValue = 0.82;
-  analyzerGain = Math.pow(10, (sliderValue - 0.25) / 0.75);
-  if (gainNode) { 
-    gainNode.amp(analyzerGain); 
-  }
-  document.getElementById("currentGain").innerText = "Current Gain: " + analyzerGain.toFixed(2);
-  
-  // Reset line thickness.
-  lineThickness = 4;
-  document.getElementById("lineThicknessSlider").value = lineThickness;
-  document.getElementById("currentLineThickness").innerText = "Current Line Thickness: " + lineThickness.toFixed(2);
-  
-  // Reset smoothing.
-  document.getElementById("smoothingSlider").value = 0.55;
-  document.getElementById("currentSmoothing").innerText = "Current Smoothing: 0.55";
-  smoothingLerpFactor = 1 - 0.55;
-  
-  // Reset logo settings.
-  logoPercent = 23;
-  document.getElementById("logoSizeSlider").value = logoPercent;
-  document.getElementById("currentLogoSize").innerText = "Current Logo Height: " + logoPercent.toFixed(0) + "%";
-  
-  logoSpeedFactor = 1.4;
-  document.getElementById("logoSpeedSlider").value = logoSpeedFactor;
-  document.getElementById("currentLogoSpeed").innerText = "Current Logo Speed: " + logoSpeedFactor.toFixed(1);
-
-  // Recalculate logo position
-  let desiredHeight = (logoPercent / 100) * height;
-  let logoScale = desiredHeight / refLogoHeight;
-  let currentLogoWidth = refLogoWidth * logoScale;
-  let currentLogoHeight = refLogoHeight * logoScale;
-  logoX = (width - currentLogoWidth) / 2;
-  logoY = (height - currentLogoHeight) / 2;
-
-  console.log("Defaults loaded.");
 }
