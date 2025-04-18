@@ -8,134 +8,77 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
   <!-- Link to our custom sketch -->
   <script src="sketch.js"></script>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: #000;
-      font-family: sans-serif;
-    }
-    /* Settings panel styling */
-    #settingsPanel {
-      display: none;
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      width: 320px;               
-      max-height: 90vh;           
-      background: rgba(238, 238, 238, 0.75);
-      padding: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      overflow-y: auto;
-    }
-    #settingsPanel h3 {
-      margin-top: 0;
-      text-align: center;
-    }
-    #settingsPanel label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    #settingsPanel input[type="color"],
-    #settingsPanel input[type="range"],
-    #settingsPanel input[type="file"],
-    #settingsPanel input[type="checkbox"] {
-      width: 100%;
-      margin-top: 5px;
-    }
-    #settingsPanel p {
-      margin: 5px 0;
-      font-size: 0.9em;
-    }
-    #settingsPanel button {
-      margin-top: 15px;
-      padding: 8px 12px;
-      width: 100%;
-      font-size: 1em;
-      border: none;
-      border-radius: 4px;
-      background-color: #444;
-      color: #fff;
-      cursor: pointer;
-    }
-    #settingsPanel button:hover {
-      background-color: #666;
-    }
-    .note {
-      font-size: 0.8em;
-      color: #555;
-      margin-top: 10px;
-    }
-    /* Logo Settings section styling */
-    .logo-settings {
-      margin-top: 20px;
-      padding-top: 10px;
-      border-top: 1px solid #ccc;
-    }
-  </style>
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <!-- Settings Panel -->
   <div id="settingsPanel">
     <h3>Settings</h3>
     
-    <!-- Feature Toggles -->
-    <label>
-      <input type="checkbox" id="toggleLogo" checked> Show Bouncing Logo
-    </label>
-    <label>
-      <input type="checkbox" id="toggleWaveform" checked> Show Waveform
-    </label>
-    
-    <label for="colorPicker">Waveform Color:</label>
-    <input type="color" id="colorPicker" value="#00FF00">
-    
-    <label for="zoomSlider">Zoom Waveform (0.5 = Zoom Out, 5 = Zoom In):</label>
-    <input type="range" id="zoomSlider" min="0.5" max="5" value="2.4" step="0.1">
-    <p id="currentZoom">Current Zoom: 2.4</p>
-    
-    <label for="gainSlider">Analyser Gain (slider range 0–1, mapped logarithmically):</label>
-    <input type="range" id="gainSlider" min="0" max="1" value="0.82" step="0.01">
-    <p id="currentGain">Current Gain: 5.75</p>
-    
-    <label for="lineThicknessSlider">Waveform Line Thickness:</label>
-    <input type="range" id="lineThicknessSlider" min="0.5" max="10" value="4" step="0.5">
-    <p id="currentLineThickness">Current Line Thickness: 4.00</p>
-    
-    <label for="smoothingSlider">Waveform Smoothing (0 = no smoothing, 1 = max smoothing):</label>
-    <input type="range" id="smoothingSlider" min="0" max="1" value="0.55" step="0.01">
-    <p id="currentSmoothing">Current Smoothing: 0.55</p>
-    
-    <p id="currentDevice">Default Microphone Device: Not determined</p>
-    <p class="note">
-      Note: This visualizer only listens to the default microphone device on your system.
-    </p>
-    
-    <!-- Logo Settings Section -->
-    <div class="logo-settings">
-      <h3>Logo Settings</h3>
+    <!-- Two-Column Layout for Analyzer and Logo Settings -->
+    <div class="settings-columns">
+      <!-- Analyzer Settings Column -->
+      <div class="analyser-settings">
+        <h4>Analyser Settings</h4>
+        <!-- Enable toggle below the column title -->
+        <label class="enable-toggle">
+          <input type="checkbox" id="toggleWaveform" checked> Enable Waveform
+        </label>
+        <label for="colorPicker">Waveform Color</label>
+        <input type="color" id="colorPicker" value="#00FF00">
+        
+        <label for="zoomSlider">Waveform Zoom</label>
+        <input type="range" id="zoomSlider" min="0.5" max="5" value="2.4" step="0.1">
+        <p id="currentZoom">Current Zoom: 2.4</p>
+        
+        <label for="gainSlider">Analyser Gain</label>
+        <input type="range" id="gainSlider" min="0" max="1" value="0.82" step="0.01">
+        <p id="currentGain">Current Gain: 5.75</p>
+        
+        <label for="lineThicknessSlider">Line Thickness</label>
+        <input type="range" id="lineThicknessSlider" min="0.5" max="10" value="4" step="0.5">
+        <p id="currentLineThickness">Current Line Thickness: 4.00</p>
+        
+        <label for="smoothingSlider">Waveform Smoothing</label>
+        <input type="range" id="smoothingSlider" min="0" max="1" value="0.55" step="0.01">
+        <p id="currentSmoothing">Current Smoothing: 0.55</p>
+        
+        <p id="currentDevice" text-allign:left>Current Device: Not determined</p>
+        <p class="note">Note: Only the default audio input is used, I cant figure out device switching for the life of me.</p>
+      </div>
       
-      <label for="logoSizeSlider">Logo Height (% of window height):</label>
-      <input type="range" id="logoSizeSlider" min="1" max="100" value="23" step="1">
-      <p id="currentLogoSize">Current Logo Height: 23%</p>
-      
-      <label for="logoSpeedSlider">Logo Speed (multiplier):</label>
-      <input type="range" id="logoSpeedSlider" min="0.1" max="5" value="1.4" step="0.1">
-      <p id="currentLogoSpeed">Current Logo Speed: 1.4</p>
-      
-      <label for="logoUpload">Upload Logo (local only):</label>
-      <input type="file" id="logoUpload" accept="image/*">
+      <!-- Logo Settings Column -->
+      <div class="logo-settings">
+        <h4>Logo Settings</h4>
+        <!-- Enable toggle below the column title -->
+        <label class="enable-toggle">
+          <input type="checkbox" id="toggleLogo" checked> Enable Logo
+        </label>
+        <label for="logoSizeSlider">Logo Size</label>
+        <input type="range" id="logoSizeSlider" min="1" max="100" value="23" step="1">
+        <p id="currentLogoSize">Current Logo Height: 23%</p>
+        
+        <label for="logoSpeedSlider">Logo Speed</label>
+        <input type="range" id="logoSpeedSlider" min="0.1" max="5" value="1.4" step="0.1">
+        <p id="currentLogoSpeed">Current Logo Speed: 1.4</p>
+        
+        <label for="logoUpload">Upload Logo</label>
+        <input type="file" id="logoUpload" accept="image/*">
+      </div>
     </div>
     
     <!-- Config Save/Load Tools -->
-    <button id="saveConfigButton">Save Config</button>
-    <button id="loadConfigButton">Load Config</button>
-    <button id="loadDefaultsButton">Load Defaults</button>
-    <!-- Hidden file input for loading config -->
-    <input type="file" id="configUpload" accept=".json" style="display:none">
+    <div class="config-tools">
+      <button id="saveConfigButton">Save Config</button>
+      <button id="loadConfigButton">Load Config</button>
+      <button id="loadDefaultsButton">Load Defaults</button>
+      <!-- Hidden file input for loading config -->
+      <input type="file" id="configUpload" accept=".json" style="display:none">
+    </div>
     
     <button onclick="toggleSettings()">Close</button>
   </div>

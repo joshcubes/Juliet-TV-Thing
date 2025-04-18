@@ -250,10 +250,10 @@ function updateCurrentDeviceDisplay() {
             deviceLabel = device.label;
           }
         });
-        document.getElementById("currentDevice").innerText = "Default Microphone Device: " + deviceLabel;
+        document.getElementById("currentDevice").innerText = "Current Input: " + deviceLabel;
       });
     } else {
-      document.getElementById("currentDevice").innerText = "Default Microphone Device: Not Available";
+      document.getElementById("currentDevice").innerText = "Audio Input Not Available";
     }
   }
 }

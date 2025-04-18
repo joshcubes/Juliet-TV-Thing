@@ -1,0 +1,208 @@
+/* Global Styles */
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  /* Settings Panel Styles */
+  #settingsPanel {
+    display: none;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 420px; /* Wider panel for better spacing */
+    max-height: 90vh;
+    background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(238,238,238,0.97));
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    overflow-y: auto;
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Panel Header */
+  #settingsPanel h3 {
+    margin-top: 0;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #333;
+  }
+  
+  /* Two-Column Layout */
+  .settings-columns {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+  }
+  
+  .analyser-settings,
+  .logo-settings {
+    flex: 1;
+    padding: 10px;
+  }
+  
+  .logo-settings {
+    border-left: 2px solid #ccc;
+  }
+  
+  /* Column Titles */
+  .analyser-settings h4,
+  .logo-settings h4 {
+    margin: 0 0 10px;
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+  }
+  
+  /* Enable Toggle Checkboxes in Each Column */
+  .enable-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 12px;
+    font-weight: 500;
+    color: #444;
+    cursor: pointer;
+    /* Removed line-height so flexbox centers items */
+  }
+  
+  .enable-toggle input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    appearance: none;
+    appearance: none;
+    appearance: none;
+    appearance: none;
+    appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #444;
+    border-radius: 4px;
+    margin-right: 8px;
+    position: relative;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  
+  .enable-toggle input[type="checkbox"]:checked {
+    background-color: #444;
+    border-color: #444;
+  }
+  
+  .enable-toggle input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: translateY(-50%) rotate(45deg);
+  }
+  
+  
+  /* Labels & Inputs */
+  #settingsPanel label {
+    display: block;
+    margin-top: 10px;
+    font-weight: 500;
+    color: #444;
+  }
+  
+  #settingsPanel input[type="color"],
+  #settingsPanel input[type="file"] {
+    width: 100%;
+    margin-top: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 4px;
+  }
+  
+  /* Paragraphs */
+  #settingsPanel p {
+    margin: 8px 0 0;
+    font-size: 0.9em;
+    color: #555;
+    text-align: center;
+  }
+  
+  /* Ensure the microphone text is left-aligned */
+  #currentDevice {
+    text-align: left;
+  }
+  
+  /* Config Tools */
+  .config-tools {
+    margin-top: 20px;
+  }
+  
+  /* Button Styles */
+  #settingsPanel button {
+    margin-top: 20px;
+    padding: 10px;
+    width: 100%;
+    font-size: 1em;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    background-color: #444;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  #settingsPanel button:hover {
+    background-color: #666;
+  }
+  
+  /* Stylish Slider Styles */
+  input[type="range"] {
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #ddd;
+    outline: none;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+  }
+  
+  input[type="range"]:hover {
+    opacity: 1;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #444;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb:hover {
+    background: #666;
+  }
+  
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #444;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  input[type="range"]::-moz-range-thumb:hover {
+    background: #666;
+  }
+  
